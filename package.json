@@ -1,0 +1,22 @@
+{
+    "name": "deckgl-gsi-terrain-layer",
+    "version": "1.0.0",
+    "description": "",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Kanahiro/deckgl-gsi-terrain-layer.git"
+    },
+    "author": "Kanahiro Iguchi <kanahiro.iguchi@gmail.com> (https://github.com/Kanahiro)",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/Kanahiro/deckgl-gsi-terrain-layer/issues"
+    },
+    "homepage": "https://github.com/Kanahiro/deckgl-gsi-terrain-layer#readme",
+    "dependencies": {
+        "deck.gl": "^8.3.6"
+    }
+}
