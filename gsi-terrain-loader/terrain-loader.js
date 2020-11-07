@@ -14,12 +14,9 @@ export const TerrainWorkerLoader = {
     options: {
         terrain: {
             bounds: null,
-            workerUrl: `https://unpkg.com/@loaders.gl/terrain@${VERSION}/dist/terrain-loader.worker.js`,
             meshMaxError: 10,
             elevationDecoder: {
-                rScaler: 1,
-                gScaler: 0,
-                bScaler: 0,
+                multiplier: 0.01,
                 offset: 0,
             },
         },

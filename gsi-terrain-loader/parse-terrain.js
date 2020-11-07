@@ -2,7 +2,7 @@ import Martini from '@mapbox/martini';
 import { getMeshBoundingBox } from '@loaders.gl/loader-utils';
 
 function getTerrain(imageData, tileSize, elevationDecoder) {
-    const { rScaler, bScaler, gScaler, offset } = elevationDecoder;
+    const { multiplier, offset } = elevationDecoder;
 
     const gridSize = tileSize + 1;
     // From Martini demo
@@ -12,17 +12,35 @@ function getTerrain(imageData, tileSize, elevationDecoder) {
     for (let i = 0, y = 0; y < tileSize; y++) {
         for (let x = 0; x < tileSize; x++, i++) {
             const k = i * 4;
-            const r = imageData[k + 0];
-            const g = imageData[k + 1];
-            const b = imageData[k + 2];
+            let r = imageData[k + 0];
+            let g = imageData[k + 1];
+            let b = imageData[k + 2];
+
+            // GSI-TERRAIN-SPECIFICATION
+            // https://maps.gsi.go.jp/development/demtile.html
 
             // r,g,b = [128, 0, 0] means no-data-value in GSI-Terrain-Spec
             // then set minimum height
-            if ((r === 128, g === 0, b === 0)) {
-                r = 0;
+            if (r === 128) {
+                if (g === 0 && b === 0) {
+                    r = 0;
+                }
+            }
+            // if r == 255, height needs to be offset
+            let gsiOffset = 0;
+            if (r === 255) {
+                gsiOffset = -16777216; // 2^24
             }
 
-            terrain[i + y] = r * rScaler + g * gScaler + b * bScaler + offset;
+            // RGB-height conversion
+            const rScaler = 65536;
+            const gScaler = 256;
+            const bScaler = 1;
+
+            terrain[i + y] =
+                (r * rScaler + g * gScaler + b * bScaler + gsiOffset) *
+                    multiplier +
+                offset;
         }
     }
     // backfill bottom border
