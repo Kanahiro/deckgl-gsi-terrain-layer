@@ -23,7 +23,7 @@ import { SimpleMeshLayer } from '@deck.gl/mesh-layers';
 import { WebMercatorViewport, COORDINATE_SYSTEM } from '@deck.gl/core';
 import { load } from '@loaders.gl/core';
 import { TerrainLoader } from './gsi-terrain-loader/terrain-loader';
-import { TileLayer } from '@deck.gl/geolayers';
+import { TileLayer } from '@deck.gl/geo-layers';
 import {
     urlType,
     getURLFromTemplate,
