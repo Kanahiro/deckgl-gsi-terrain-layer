@@ -1,7 +1,7 @@
 {
     "name": "deckgl-gsi-terrain-layer",
     "version": "1.0.0",
-    "description": "Modified TerrainLayer of deck.gl to decode GSI-Terrain-PNG.",
+    "description": "GsiTerrainLayer is deck.gl TerrainLayer modified for GSI-Terrain-PNG.",
     "main": "index.js",
     "scripts": {},
     "repository": {

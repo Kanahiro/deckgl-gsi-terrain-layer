@@ -267,3 +267,4 @@ export default class GsiTerrainLayer extends CompositeLayer {
 
 GsiTerrainLayer.layerName = 'GsiTerrainLayer';
 GsiTerrainLayer.defaultProps = defaultProps;
+export { GsiTerrainLayer };
