@@ -10,7 +10,7 @@
     "dependencies": {
         "core-js": "^3.6.5",
         "deck.gl": "^8.3.6",
-        "deckgl-gsi-terrain-layer": "^1.0.0",
+        "deckgl-gsi-terrain-layer": "^1.0.1",
         "mapbox-gl": "^1.12.0",
         "vue": "^2.6.11"
     },

@@ -45,7 +45,7 @@ export default {
             const layer = new GsiTerrainLayer({
                 id: 'gsiTerrain',
                 minZoom: 0,
-                maxZoom: 15,
+                maxZoom: 14,
                 elevationDecoder: ELEVATION_DECODER,
                 elevationData: TERRAIN_IMAGE,
                 texture: SURFACE_IMAGE,
