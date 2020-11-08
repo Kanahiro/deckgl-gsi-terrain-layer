@@ -15,20 +15,15 @@ function getTerrain(imageData, tileSize, elevationDecoder) {
             let r = imageData[k + 0];
             let g = imageData[k + 1];
             let b = imageData[k + 2];
+            let gsiOffset = 0;
 
             // GSI-TERRAIN-SPECIFICATION
             // https://maps.gsi.go.jp/development/demtile.html
             // r,g,b = [128, 0, 0] means no-data-value in GSI-Terrain-Spec
             // then set minimum height
-            if (r === 128) {
-                if (g === 0 && b === 0) {
-                    r = 0;
-                }
-            }
-
-            // if r == 255, height needs to be offset
-            let gsiOffset = 0;
-            if (r === 255) {
+            if (r === 128 && g === 0 && b === 0) {
+                r = 0;
+            } else if (r >= 128) {
                 gsiOffset = -16777216; // 2^24
             }
 
