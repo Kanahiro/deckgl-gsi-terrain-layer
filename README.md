@@ -6,6 +6,13 @@ RGB値の標高への換算(elevationDecoder)以外はTerrainLayerと全く同�
 
 https://deck.gl/docs/api-reference/geo-layers/terrain-layer
 
+## sample
+
+以下のURLで地理院タイルのみを用いた3D表示のサンプルが見られます
+
+https://kanahiro.github.io/deckgl-gsi-terrain-layer/
+
+
 ## usage
 
 ```shell
@@ -13,10 +20,38 @@ https://deck.gl/docs/api-reference/geo-layers/terrain-layer
 npm install deckgl-gsi-terrain-layer
 ```
 
+```javascript
 
-### elevationDecoder
+import { GsiTerrainLayer } from 'deckgl-gsi-terrain-layer';
 
-#### TerrainLayerの場合
+// 地理院タイル
+const TERRAIN_IMAGE = 'https://cyberjapandata.gsi.go.jp/xyz/dem_png/{z}/{x}/{y}.png';
+const SURFACE_IMAGE = 'https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg';
+
+// RGB標高変換パラメータ
+const ELEVATION_DECODER = {
+    scaler: 0.01, // 分解能, 実寸なら0.01
+    offset: 0, // RGB値がゼロの場合の標高値
+};
+
+const layer = new GsiTerrainLayer({
+    id: 'gsiTerrain',
+    minZoom: 0,
+    maxZoom: 15,
+    elevationDecoder: ELEVATION_DECODER,
+    elevationData: TERRAIN_IMAGE,
+    texture: SURFACE_IMAGE,
+});
+
+// あとは通常のTerrainLayerと同じ扱いです
+```
+
+<a href='./sample/src/components/GsiTerrainLayer.vue'>./sample/src/components/GsiTerrainLayer.vue</a>が実装例です
+
+
+## 参考：elevationDecoder
+
+### TerrainLayerの場合
 
 deck.glオリジナルのTerrainLayerのelevationDecoderは以下のようなパラメータです
 
@@ -33,7 +68,7 @@ elevationDecoder: {
 
 [※Mapboxなどで採用されているMapzen-Terrainの変換パラメータです](https://docs.mapbox.com/help/troubleshooting/access-elevation-data/)
 
-#### GsiTerrainLayerの場合
+### GsiTerrainLayerの場合
 
 [国土地理院/標高タイル詳細仕様](https://maps.gsi.go.jp/development/demtile.html)から、無効値の定義などが独特であり、前述のTerrainLayerの様にRGB値で単調増加させればよいとは言えませんが、一部の特殊な値を除いては分解能0.01mでの単調増加です。
 
