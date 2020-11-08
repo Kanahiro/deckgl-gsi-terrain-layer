@@ -50,7 +50,7 @@ const layer = new GsiTerrainLayer({
 <a href='./sample/src/components/GsiTerrainLayer.vue'>./sample/src/components/GsiTerrainLayer.vue</a>が実装例です
 
 
-## 参考：elevationDecoder
+## Tips:elevationDecoder
 
 ### TerrainLayerの場合
 
