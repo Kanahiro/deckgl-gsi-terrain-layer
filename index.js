@@ -48,9 +48,7 @@ const defaultProps = {
     elevationDecoder: {
         type: 'object',
         value: {
-            rScaler: 1,
-            gScaler: 0,
-            bScaler: 0,
+            scaler: 0.01,
             offset: 0,
         },
     },

@@ -16,7 +16,7 @@ export const TerrainWorkerLoader = {
             bounds: null,
             meshMaxError: 10,
             elevationDecoder: {
-                multiplier: 0.01,
+                scaler: 0.01,
                 offset: 0,
             },
         },
