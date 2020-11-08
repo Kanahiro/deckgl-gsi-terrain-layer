@@ -4,7 +4,6 @@
 
 RGB値の標高への換算(elevationDecoder)以外はTerrainLayerと全く同じ仕様です
 
-https://deck.gl/docs/api-reference/geo-layers/terrain-layer
 
 ## sample
 
