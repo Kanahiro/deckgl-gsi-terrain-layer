@@ -2,7 +2,7 @@
 
 <img src='./sample.jpg'>
 
-国土地理院の標高タイルを用いて地形を3D表示するために、deck.glのTerrainLayerをその独特な仕様に合わせて拡張したものです
+国土地理院の標高タイルを用いて地形を3D表示するために、deck.glのTerrainLayerを標高タイルの独特な仕様に合わせて拡張したものです
 
 RGB値の標高への換算(elevationDecoder)以外はTerrainLayerと全く同じ仕様です
 
