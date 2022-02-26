@@ -15,6 +15,6 @@
     },
     "homepage": "https://github.com/Kanahiro/deckgl-gsi-terrain-layer#readme",
     "dependencies": {
-        "deck.gl": "^8.3.6"
+        "deck.gl": "^8.6.8"
     }
 }
