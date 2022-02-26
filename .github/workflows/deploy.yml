@@ -19,12 +19,11 @@ jobs:
                   registry-url: 'https://registry.npmjs.org'
             - name: install dependencies and build
               run: |
-                  cd sample
                   npm install
                   npm run build
             - name: deploy
               uses: peaceiris/actions-gh-pages@v3
               with:
                   github_token: ${{ secrets.GITHUB_TOKEN }}
-                  publish_dir: ./sample/dist
+                  publish_dir: ./demo
                   publish_branch: gh-pages

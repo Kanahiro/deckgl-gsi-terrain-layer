@@ -1,2 +1,4 @@
 node_modules/
 .DS_Store
+demo/index.bundle.js
+demo/index.d.ts
