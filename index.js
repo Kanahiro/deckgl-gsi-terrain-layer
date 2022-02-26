@@ -1,5 +1,4 @@
 // Copyright (c) 2015 - 2017 Uber Technologies, Inc.
-// Copyright (c) 2020 Kanahiro Iguchi
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -19,52 +18,50 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-import { CompositeLayer } from '@deck.gl/core';
-import { SimpleMeshLayer } from '@deck.gl/mesh-layers';
-import { WebMercatorViewport, COORDINATE_SYSTEM } from '@deck.gl/core';
-import { load } from '@loaders.gl/core';
-import { TerrainLoader } from './gsi-terrain-loader/terrain-loader';
-import { TileLayer } from '@deck.gl/geo-layers';
-import {
-    urlType,
-    getURLFromTemplate,
-} from '@deck.gl/geo-layers/src/tile-layer/utils';
+import {CompositeLayer, log} from '@deck.gl/core';
+import {SimpleMeshLayer} from '@deck.gl/mesh-layers';
+import {COORDINATE_SYSTEM} from '@deck.gl/core';
+import {TerrainLoader} from './gsi-terrain-loader/terrain-loader';
+import {TileLayer} from '@deck.gl/geo-layers';
+import {urlType, getURLFromTemplate} from  '@deck.gl/geo-layers/src/tile-layer/utils';
 
 const DUMMY_DATA = [1];
 
 const defaultProps = {
-    ...TileLayer.defaultProps,
-    // Image url that encodes height data
-    elevationData: urlType,
-    // Image url to use as texture
-    texture: urlType,
-    // Martini error tolerance in meters, smaller number -> more detailed mesh
-    meshMaxError: { type: 'number', value: 4.0 },
-    // Bounding box of the terrain image, [minX, minY, maxX, maxY] in world coordinates
-    bounds: { type: 'array', value: null, optional: true, compare: true },
-    // Color to use if texture is unavailable
-    color: { type: 'color', value: [255, 255, 255] },
-    // Object to decode height data, from (r, g, b) to height in meters
-    elevationDecoder: {
-        type: 'object',
-        value: {
-            scaler: 0.01,
-            offset: 0,
-        },
+  ...TileLayer.defaultProps,
+  // Image url that encodes height data
+  elevationData: urlType,
+  // Image url to use as texture
+  texture: {...urlType, optional: true},
+  // Martini error tolerance in meters, smaller number -> more detailed mesh
+  meshMaxError: {type: 'number', value: 4.0},
+  // Bounding box of the terrain image, [minX, minY, maxX, maxY] in world coordinates
+  bounds: {type: 'array', value: null, optional: true, compare: true},
+  // Color to use if texture is unavailable
+  color: {type: 'color', value: [255, 255, 255]},
+  // Object to decode height data, from (r, g, b) to height in meters
+  elevationDecoder: {
+    type: 'object',
+    value: {
+        scaler: 0.01,
+        offset: 0,
     },
-    // Supply url to local terrain worker bundle. Only required if running offline and cannot access CDN.
-    workerUrl: { type: 'string', value: null },
-    // Same as SimpleMeshLayer wireframe
-    wireframe: false,
-    material: true,
+  },
+  // Supply url to local terrain worker bundle. Only required if running offline and cannot access CDN.
+  workerUrl: {type: 'string', value: null},
+  // Same as SimpleMeshLayer wireframe
+  wireframe: false,
+  material: true,
+
+  loaders: [TerrainLoader]
 };
 
 // Turns array of templates into a single string to work around shallow change
 function urlTemplateToUpdateTrigger(template) {
-    if (Array.isArray(template)) {
-        return template.join(';');
-    }
-    return template;
+  if (Array.isArray(template)) {
+    return template.join(';');
+  }
+  return template;
 }
 
 /**
@@ -74,197 +71,207 @@ function urlTemplateToUpdateTrigger(template) {
  * }
  */
 export default class GsiTerrainLayer extends CompositeLayer {
-    updateState({ props, oldProps }) {
-        const elevationDataChanged =
-            props.elevationData !== oldProps.elevationData;
-        if (elevationDataChanged) {
-            const { elevationData } = props;
-            const isTiled =
-                elevationData &&
-                (Array.isArray(elevationData) ||
-                    (elevationData.includes('{x}') &&
-                        elevationData.includes('{y}')));
-            this.setState({ isTiled });
-        }
-
-        // Reloading for single terrain mesh
-        const shouldReload =
-            elevationDataChanged ||
-            props.meshMaxError !== oldProps.meshMaxError ||
-            props.elevationDecoder !== oldProps.elevationDecoder ||
-            props.bounds !== oldProps.bounds;
-
-        if (!this.state.isTiled && shouldReload) {
-            const terrain = this.loadTerrain(props);
-            this.setState({ terrain });
-        }
+  updateState({props, oldProps}) {
+    const elevationDataChanged = props.elevationData !== oldProps.elevationData;
+    if (elevationDataChanged) {
+      const {elevationData} = props;
+      const isTiled =
+        elevationData &&
+        (Array.isArray(elevationData) ||
+          (elevationData.includes('{x}') && elevationData.includes('{y}')));
+      this.setState({isTiled});
     }
 
-    loadTerrain({
-        elevationData,
+    // Reloading for single terrain mesh
+    const shouldReload =
+      elevationDataChanged ||
+      props.meshMaxError !== oldProps.meshMaxError ||
+      props.elevationDecoder !== oldProps.elevationDecoder ||
+      props.bounds !== oldProps.bounds;
+
+    if (!this.state.isTiled && shouldReload) {
+      const terrain = this.loadTerrain(props);
+      this.setState({terrain});
+    }
+
+    // TODO - remove in v9
+    if (props.workerUrl) {
+      log.removed('workerUrl', 'loadOptions.terrain.workerUrl')();
+    }
+  }
+
+  loadTerrain({elevationData, bounds, elevationDecoder, meshMaxError, signal}) {
+    if (!elevationData) {
+      return null;
+    }
+    let loadOptions = this.getLoadOptions();
+    loadOptions = {
+      ...loadOptions,
+      terrain: {
+        skirtHeight: this.state.isTiled ? meshMaxError * 2 : 0,
+        ...loadOptions?.terrain,
         bounds,
-        elevationDecoder,
         meshMaxError,
-        workerUrl,
-    }) {
-        if (!elevationData) {
-            return null;
-        }
-        const options = {
-            terrain: {
-                bounds,
-                meshMaxError,
-                elevationDecoder,
-            },
-        };
-        if (workerUrl !== null) {
-            options.terrain.workerUrl = workerUrl;
-        }
-        return load(elevationData, TerrainLoader, options);
+        elevationDecoder
+      }
+    };
+    const {fetch} = this.props;
+    return fetch(elevationData, {propName: 'elevationData', layer: this, loadOptions, signal});
+  }
+
+  getTiledTerrainData(tile) {
+    const {elevationData, fetch, texture, elevationDecoder, meshMaxError} = this.props;
+    const {viewport} = this.context;
+    const dataUrl = getURLFromTemplate(elevationData, tile);
+    const textureUrl = getURLFromTemplate(texture, tile);
+
+    const {bbox, signal} = tile;
+    const bottomLeft = viewport.isGeospatial
+      ? viewport.projectFlat([bbox.west, bbox.south])
+      : [bbox.left, bbox.bottom];
+    const topRight = viewport.isGeospatial
+      ? viewport.projectFlat([bbox.east, bbox.north])
+      : [bbox.right, bbox.top];
+    const bounds = [bottomLeft[0], bottomLeft[1], topRight[0], topRight[1]];
+
+    const terrain = this.loadTerrain({
+      elevationData: dataUrl,
+      bounds,
+      elevationDecoder,
+      meshMaxError,
+      signal
+    });
+    const surface = textureUrl
+      ? // If surface image fails to load, the tile should still be displayed
+        fetch(textureUrl, {propName: 'texture', layer: this, loaders: [], signal}).catch(_ => null)
+      : Promise.resolve(null);
+
+    return Promise.all([terrain, surface]);
+  }
+
+  renderSubLayers(props) {
+    const SubLayerClass = this.getSubLayerClass('mesh', SimpleMeshLayer);
+    const {data, color} = props;
+
+    if (!data) {
+      return null;
     }
 
-    getTiledTerrainData(tile) {
-        const {
-            elevationData,
-            texture,
-            elevationDecoder,
-            meshMaxError,
-            workerUrl,
-        } = this.props;
-        const dataUrl = getURLFromTemplate(elevationData, tile);
-        const textureUrl = getURLFromTemplate(texture, tile);
+    const [mesh, texture] = data;
 
-        const { bbox, z } = tile;
-        const viewport = new WebMercatorViewport({
-            longitude: (bbox.west + bbox.east) / 2,
-            latitude: (bbox.north + bbox.south) / 2,
-            zoom: z,
-        });
-        const bottomLeft = viewport.projectFlat([bbox.west, bbox.south]);
-        const topRight = viewport.projectFlat([bbox.east, bbox.north]);
-        const bounds = [bottomLeft[0], bottomLeft[1], topRight[0], topRight[1]];
+    return new SubLayerClass(props, {
+      data: DUMMY_DATA,
+      mesh,
+      texture,
+      _instanced: false,
+      coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
+      getPosition: d => [0, 0, 0],
+      getColor: color
+    });
+  }
 
-        const terrain = this.loadTerrain({
-            elevationData: dataUrl,
-            bounds,
-            elevationDecoder,
-            meshMaxError,
-            workerUrl,
-        });
-        const surface = textureUrl
-            ? // If surface image fails to load, the tile should still be displayed
-              load(textureUrl).catch((_) => null)
-            : Promise.resolve(null);
-
-        return Promise.all([terrain, surface]);
+  // Update zRange of viewport
+  onViewportLoad(tiles) {
+    if (!tiles) {
+      return;
     }
 
-    renderSubLayers(props) {
-        const SubLayerClass = this.getSubLayerClass('mesh', SimpleMeshLayer);
-        const { data, color } = props;
+    const {zRange} = this.state;
+    const ranges = tiles
+      .map(tile => tile.content)
+      .filter(Boolean)
+      .map(arr => {
+        const bounds = arr[0].header.boundingBox;
+        return bounds.map(bound => bound[2]);
+      });
+    if (ranges.length === 0) {
+      return;
+    }
+    const minZ = Math.min(...ranges.map(x => x[0]));
+    const maxZ = Math.max(...ranges.map(x => x[1]));
 
-        if (!data) {
-            return null;
+    if (!zRange || minZ < zRange[0] || maxZ > zRange[1]) {
+      this.setState({zRange: [minZ, maxZ]});
+    }
+  }
+
+  renderLayers() {
+    const {
+      color,
+      material,
+      elevationData,
+      texture,
+      wireframe,
+      meshMaxError,
+      elevationDecoder,
+      tileSize,
+      maxZoom,
+      minZoom,
+      extent,
+      maxRequests,
+      onTileLoad,
+      onTileUnload,
+      onTileError,
+      maxCacheSize,
+      maxCacheByteSize,
+      refinementStrategy
+    } = this.props;
+
+    if (this.state.isTiled) {
+      return new TileLayer(
+        this.getSubLayerProps({
+          id: 'tiles'
+        }),
+        {
+          wireframe,
+          color,
+          material,
+          getTileData: this.getTiledTerrainData.bind(this),
+          renderSubLayers: this.renderSubLayers.bind(this),
+          updateTriggers: {
+            getTileData: {
+              elevationData: urlTemplateToUpdateTrigger(elevationData),
+              texture: urlTemplateToUpdateTrigger(texture),
+              meshMaxError,
+              elevationDecoder
+            }
+          },
+          onViewportLoad: this.onViewportLoad.bind(this),
+          zRange: this.state.zRange || null,
+          tileSize,
+          maxZoom,
+          minZoom,
+          extent,
+          maxRequests,
+          onTileLoad,
+          onTileUnload,
+          onTileError,
+          maxCacheSize,
+          maxCacheByteSize,
+          refinementStrategy
         }
-
-        const [mesh, texture] = data;
-
-        return new SubLayerClass(props, {
-            data: DUMMY_DATA,
-            mesh,
-            texture,
-            coordinateSystem: COORDINATE_SYSTEM.CARTESIAN,
-            getPosition: (d) => [0, 0, 0],
-            getColor: color,
-        });
+      );
     }
 
-    // Update zRange of viewport
-    onViewportLoad(data) {
-        if (!data || data.length === 0 || data.every((x) => !x)) {
-            return;
-        }
-
-        const { zRange } = this.state;
-        const ranges = data.filter(Boolean).map((arr) => {
-            const bounds = arr[0].header.boundingBox;
-            return bounds.map((bound) => bound[2]);
-        });
-        const minZ = Math.min(...ranges.map((x) => x[0]));
-        const maxZ = Math.max(...ranges.map((x) => x[1]));
-
-        if (!zRange || minZ < zRange[0] || maxZ > zRange[1]) {
-            this.setState({ zRange: [minZ, maxZ] });
-        }
-    }
-
-    renderLayers() {
-        const {
-            color,
-            material,
-            elevationData,
-            texture,
-            wireframe,
-            meshMaxError,
-            elevationDecoder,
-            tileSize,
-            maxZoom,
-            minZoom,
-            extent,
-            maxRequests,
-        } = this.props;
-
-        if (this.state.isTiled) {
-            return new TileLayer(
-                this.getSubLayerProps({
-                    id: 'tiles',
-                }),
-                {
-                    wireframe,
-                    color,
-                    material,
-                    getTileData: this.getTiledTerrainData.bind(this),
-                    renderSubLayers: this.renderSubLayers.bind(this),
-                    updateTriggers: {
-                        getTileData: {
-                            elevationData: urlTemplateToUpdateTrigger(
-                                elevationData,
-                            ),
-                            texture: urlTemplateToUpdateTrigger(texture),
-                            meshMaxError,
-                            elevationDecoder,
-                        },
-                    },
-                    onViewportLoad: this.onViewportLoad.bind(this),
-                    zRange: this.state.zRange || null,
-                    tileSize,
-                    maxZoom,
-                    minZoom,
-                    extent,
-                    maxRequests,
-                },
-            );
-        }
-
-        const SubLayerClass = this.getSubLayerClass('mesh', SimpleMeshLayer);
-        return new SubLayerClass(
-            this.getSubLayerProps({
-                id: 'mesh',
-            }),
-            {
-                data: DUMMY_DATA,
-                mesh: this.state.terrain,
-                texture,
-                _instanced: false,
-                getPosition: (d) => [0, 0, 0],
-                getColor: color,
-                material,
-                wireframe,
-            },
-        );
-    }
+    const SubLayerClass = this.getSubLayerClass('mesh', SimpleMeshLayer);
+    return new SubLayerClass(
+      this.getSubLayerProps({
+        id: 'mesh'
+      }),
+      {
+        data: DUMMY_DATA,
+        mesh: this.state.terrain,
+        texture,
+        _instanced: false,
+        getPosition: d => [0, 0, 0],
+        getColor: color,
+        material,
+        wireframe
+      }
+    );
+  }
 }
 
 GsiTerrainLayer.layerName = 'GsiTerrainLayer';
 GsiTerrainLayer.defaultProps = defaultProps;
-export { GsiTerrainLayer };
+export {GsiTerrainLayer}
