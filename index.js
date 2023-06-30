@@ -23,7 +23,7 @@ import {SimpleMeshLayer} from '@deck.gl/mesh-layers';
 import {COORDINATE_SYSTEM} from '@deck.gl/core';
 import {TerrainLoader} from './gsi-terrain-loader/terrain-loader';
 import {TileLayer} from '@deck.gl/geo-layers';
-import {urlType, getURLFromTemplate} from  '@deck.gl/geo-layers/src/tile-layer/utils';
+import {urlType, getURLFromTemplate} from  '@deck.gl/geo-layers/src/tileset-2d';
 
 const DUMMY_DATA = [1];
 
