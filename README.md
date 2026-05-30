@@ -1,3 +1,5 @@
+ARCHIVED: [https://mapterhorn.com/](Mapterhorn)の利用を推奨します
+
 # deckgl-gsi-terrain-layer
 
 <img src='./sample.jpg'>
